@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>ONE BS - Collecte de CV</title>
+  <script src="https://cdn.jsdelivr.net/npm/phaser@3.60.0/dist/phaser.js"></script>
+  <style>
+    body {
+      margin: 0;
+      background-color: #ffffff;
+    }
+    canvas {
+      display: block;
+      margin: 0 auto;
+    }
+  </style>
+</head>
+<body>
+  <script>
+    const config = {
+      type: Phaser.AUTO,
+      width: 800,
+      height: 600,
+      backgroundColor: '#fff8dc',
+      physics: {
+        default: 'arcade',
+        arcade: {
+          gravity: { y: 300 },
+          debug: false
+        }
+      },
+      scene: {
+        preload: preload,
+        create: create,
+        update: update
+      }
+    };
+
+    let player;
+    let cursors;
+    let cvGroup;
+    let score = 0;
+    let scoreText;
+
+    const game = new Phaser.Game(config);
+
+    function preload() {
+      this.load.image('player', 'https://i.imgur.com/7tF1Hgd.png'); // étudiant
+      this.load.image('cv', 'https://i.imgur.com/L4zQkY0.png'); // CV
+      this.load.image('cv_malus', 'https://i.imgur.com/U5Qhg5f.png'); // CV malus
+      this.load.image('platform', 'https://i.imgur.com/3vGp3Xi.png');
+    }
+
+    function create() {
+      // Plateformes
+      const platforms = this.physics.add.staticGroup();
+      platforms.create(400, 580, 'platform').setScale(2).refreshBody();
+
+      // Joueur
+      player = this.physics.add.sprite(100, 450, 'player').setScale(0.5);
+      player.setBounce(0.2);
+      player.setCollideWorldBounds(true);
+
+      // Contrôles
+      cursors = this.input.keyboard.createCursorKeys();
+
+      // CVs
+      cvGroup = this.physics.add.group({
+        key: 'cv',
+        repeat: 5,
+        setXY: { x: 150, y: 0, stepX: 120 }
+      });
+
+      cvGroup.children.iterate(function (child) {
+        child.setBounceY(Phaser.Math.FloatBetween(0.2, 0.5));
+      });
+
+      // Collision
+      this.physics.add.collider(player, platforms);
+      this.physics.add.collider(cvGroup, platforms);
+      this.physics.add.overlap(player, cvGroup, collectCV, null, this);
+
+      // Score
+      scoreText = this.add.text(16, 16, 'CV collectés : 0', { fontSize: '24px', fill: '#000' });
+    }
+
+    function update() {
+      if (cursors.left.isDown) {
+        player.setVelocityX(-160);
+      } else if (cursors.right.isDown) {
+        player.setVelocityX(160);
+      } else {
+        player.setVelocityX(0);
+      }
+
+      if (cursors.up.isDown && player.body.touching.down) {
+        player.setVelocityY(-330);
+      }
+    }
+
+    function collectCV(player, cv) {
+      cv.disableBody(true, true);
+      score += 1;
+      scoreText.setText('CV collectés : ' + score);
+    }
+  </script>
+</body>
+</html>
